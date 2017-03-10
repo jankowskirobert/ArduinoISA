@@ -11,7 +11,9 @@ String menuOptions[] = {
 bool observerState = false;
 int currentMenuPosition = 0;
 int choosedPosition = -1;
+int analogValue = -1;
 void setup() {
+  Serial.begin(9600);
     button.init();
     lcd.begin(16,2);
     initScreen();
@@ -39,7 +41,24 @@ void loop() {
     currentMenuPosition = 2; 
     observerState = true;
    }
+   analogValue = analogRead(A0);
+   if(analogValue <= 350){
+    if(currentMenuPosition < 2){
+    currentMenuPosition++; 
+    }else
+    currentMenuPosition = 0; 
+    observerState = true;
+   }
+     if(analogValue >= 800){
+      
+if(currentMenuPosition > 0){
+    currentMenuPosition--; 
+    }else
+    currentMenuPosition = 2; 
+    observerState = true;
+   }
    delay(25);
+   Serial.println(analogValue);
    printMenuPosition(currentMenuPosition);
 }
 void printMenuPosition(int menuPosition) {
