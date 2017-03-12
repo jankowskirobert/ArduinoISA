@@ -8,16 +8,16 @@
 
 #include "Arduino.h"
 
-class ISA7SegmentDisplay{
+class ISA7SegmentDisplay {
 
   public:
-    ISA7SegmentDisplay() {}
-    void init();
-    void displayDigit(byte digit, int dispID);
-    void setLed(byte values, int dispID);
+	ISA7SegmentDisplay() {}
+	void init();
+	void displayDigit(byte digit, int dispID, bool dot = false);
+	void setLed(byte values, int dispID);
 
   private:
-    const byte numbers[10] = {B11101101, B00001001, B10110101, B10011101, B01011001, B11011100, B11111100, B00001101, B11111101, B11011101};
+	const byte numbers[10] = {B11101101, B00001001, B10110101, B10011101, B01011001, B11011100, B11111100, B00001101, B11111101, B11011101};
 	const int STR1 = 33;
 	const int STR2 = 34;
 	const int STR3 = 35;

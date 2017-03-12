@@ -8,16 +8,21 @@
 #include "ISA7SegmentDisplay.h"
 
 
-void ISA7SegmentDisplay::displayDigit(byte digit, int dispID)
+void ISA7SegmentDisplay::displayDigit(byte digit, int dispID, bool dot)
 {
   if (digit > 9 || dispID > 3)
     return;
   
+  byte value = numbers[digit];
+
+  if (dot) 
+    value |= (1 << 1);
+
   for (int i = 0; i < 8; ++i)
   {
     digitalWrite(CLK, LOW);
     delayMicroseconds(5);
-    digitalWrite(DATA, !((numbers[digit])&(1<<i)));
+    digitalWrite(DATA, !((value)&(1<<i)));
     delayMicroseconds(5);
     digitalWrite(CLK, HIGH);
     delayMicroseconds(5);
