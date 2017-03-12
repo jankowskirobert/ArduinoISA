@@ -1,4 +1,10 @@
 #include "ISADefinitions.h"
+#include <DueTimer.h>
+
+class SterringRain {
+  
+} ;
+
 
 class LEDFun {
  private:
@@ -33,10 +39,17 @@ void LEDFun::clearLeds(void) {
 }
 
 void setup() {
+  pinMode(24, OUTPUT);
+//  Timer4.attachInterrupt(dioda);
+//  Timer4.start(1000000);
   qwerty.initLeds();
 }
 
 void loop() {
+
+//  digitalWrite(24, HIGH);
+//  delay(10);
+//  digitalWrite(24, LOW);
   int pot = analogRead(A9);
   int mapped = map(pot, 0, 1023, 0, 255);
   qwerty.setUpValue(mapped);
