@@ -12,6 +12,15 @@ volatile int cntL = 0, cntP = 0;
 volatile float velocityL = 0.0, velocityP = 0.0;
 volatile unsigned long last_measurement;
 
+//Sonar
+int trig = 45;    
+int echo = 44;    
+float duration;
+float distance = 30;
+char buffor[16];
+
+
+
 void revolveCounterL() {
  cntL++;
 }
@@ -103,11 +112,32 @@ void rectangle(int a, int b){
   stopCar();
 }
 
+void displayDistanceSerial(float distance){
+  Serial.print("Distance (in cm): ");
+  Serial.print(distance);
+  Serial.print(int(distance));
+  Serial.println();
+}
+
+bool checkBrakeStatus(float distance){
+
+  if(distance < 25){
+    displayDistanceSerial(distance);
+
+    return false;
+    } else {
+      displayDistanceSerial(distance);
+      return true;
+    }
+}
+
 void setup() {
  pinMode(AIN1, OUTPUT);
  pinMode(AIN2, OUTPUT);
  pinMode(BIN1, OUTPUT);
  pinMode(BIN2, OUTPUT);
+ pinMode(trig, OUTPUT);
+ pinMode(echo, INPUT);
 
  Serial.begin(9600);
  pinMode(encoderP, INPUT); 
@@ -123,10 +153,28 @@ void setup() {
 
 void loop(){
 
-  rectangle(100,100);
-  //forward(20);
+//  rectangle(100,100);
+  
   
   //delay(100);
+
+  
+digitalWrite(trig, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW); 
+  
+  pinMode(echo, INPUT);
+  duration = pulseIn(echo, HIGH);
+ 
+  distance = (duration/2) / 29.1 - 0.5;
+if (checkBrakeStatus(distance)){
+  
+  forward(20);
+} else{
+stopCar();
+}
  
 
  /**backward
