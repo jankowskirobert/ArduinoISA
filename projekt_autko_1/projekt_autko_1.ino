@@ -50,31 +50,58 @@ void turnLeft(int timeToTurn, int tempo) {
   digitalWrite(BIN2, HIGH); // AIN1; 
 }
 
-void ster(int ){
-  
+void stopCar(){
+  digitalWrite(AIN1, HIGH); // AIN1; 
+  digitalWrite(AIN2, HIGH); // AIN1; 
+  digitalWrite(BIN1, HIGH); // AIN2
+  digitalWrite(BIN2, HIGH); // AIN1; 
 }
-
 void forward(int tempo){
 
  digitalWrite(AIN1, LOW); // AIN1; 
  digitalWrite(BIN1, LOW); // AIN2
   //float tempo=(float)temp;
+  int rate=5;
   Serial.println(cntP);
   Serial.println(cntL);
   Serial.println(voltP);
   Serial.println(velocityL);
   Serial.println(velocityP);
   Serial.println();
- if(((int)velocityL)<tempo) voltL+=1;
- if(((int)velocityL)>tempo) voltL-=1;
- if(((int)velocityP)<tempo) voltP+=1;
- if(((int)velocityP)>tempo) voltP-=1;
+ if(((int)velocityL)<tempo) voltL+=rate;
+ if(((int)velocityL)>tempo) voltL-=rate;
+ if(((int)velocityP)<tempo) voltP+=rate;
+ if(((int)velocityP)>tempo) voltP-=rate;
  
  analogWrite(AIN2, voltL);
  analogWrite(BIN2, voltP);
  
 }
 
+void rectangle(int a, int b){
+  int i;
+  int rate = 50;
+  turnLeft(85, 250);
+  for(i=0;i<a;i++)
+    forward(rate);
+  stopCar();
+  delay(100);
+  turnLeft(85, 250);
+  for(i=0;i<b;i++)
+    forward(rate);
+  stopCar();
+  delay(100);
+  turnLeft(85, 250);
+  
+  for(i=0;i<a;i++)
+    forward(rate);
+  stopCar();
+  delay(100);
+  turnLeft(85, 250);
+  for(i=0;i<b;i++)
+    forward(rate);
+  stopCar();
+}
 
 void setup() {
  pinMode(AIN1, OUTPUT);
@@ -91,14 +118,15 @@ void setup() {
  Timer4.start(250000);
 
 
- turnLeft(85, 250);
+
 }
 
 void loop(){
 
+  rectangle(100,100);
   //forward(20);
   
-  delay(100);
+  //delay(100);
  
 
  /**backward
