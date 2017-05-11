@@ -6,6 +6,7 @@ ISALiquidCrystal lcd;
 ISALedControl led;
 int joy1_x = 0;
 int joy1_y = 0;
+int pixel[][2]  = {{0,0},{0,0},{0,0},{0,0}};
 void setup() {
   for (int i = 0 ; i < 7; i++){
     pinMode(LEDS[i], OUTPUT);
@@ -47,7 +48,9 @@ void remapToDisplay(int angIn_X, int angIn_Y, int barrier_x, int barrier_y){
 
   int val = map(tmp_x, 0, 8, 0, 255);
   ledBright(val);
-  led.setLed(tmp_y, tmp_x, true);
+
+  pixelUpdate(pixel, tmp_x,tmp_y);
+//  led.setLed(tmp_y, tmp_x, true);
 }
 
 void ledBright(int val){
@@ -56,5 +59,23 @@ void ledBright(int val){
 
 void barrier(int x, int y) {
   led.setLed(y, x, true);
+}
+
+void pixelUpdate(int pixel[][2], int x, int y) {
+  
+    pixel[0][0] = x-1 ;
+    pixel[0][1] = y-1; 
+    
+    pixel[1][0] = x ;
+    pixel[1][1] = y-1 ;
+    
+    pixel[2][0] = x-1; 
+    pixel[2][1] = y ;
+
+    pixel[3][0] = x ;
+    pixel[3][1] = y; 
+  for(int i = 0; i < 4 ;i++){
+     led.setLed(pixel[i][1], pixel[i][0], true);
+    }
 }
 
