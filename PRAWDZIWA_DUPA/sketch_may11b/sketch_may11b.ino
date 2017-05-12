@@ -2,7 +2,9 @@
 #include <ISALedControl.h>
 #include <ISALiquidCrystal.h>
 #include <ISAButtons.h>
+#include <ISAOLED.h>
 
+ISAOLED oled;
 ISALiquidCrystal lcd;
 ISALedControl led;
 ISAButtons button;
@@ -14,81 +16,94 @@ bool leftButtonState = false;
 bool rightButtonState = false;
 unsigned long start_time_LEFT;
 unsigned long start_time_RIGHT;
+volatile long long timeout = 200; // 3 seconds
+volatile long long last_change_time = 0;
+
+//volatile enemies[][2] = {{}};
+
 void setup() {
+  oled.begin();
   for (int i = 0 ; i < 7; i++){
     pinMode(LEDS[i], OUTPUT);
   }
-  current_position = new volatile int*[2];
-  for(int i = 0; i < 2; ++i)
+  current_position = new volatile int*[3];
+  for(int i = 0; i < 3; ++i)
     current_position[i] = new volatile int[0];
     
-  current_position[0][0] = 3; 
-  current_position[0][1] = 7; 
-  current_position[1][0] = 4; 
-  current_position[1][1] = 7; 
-
+  current_position[0][0] = 62; 
+  current_position[0][1] = 63; 
+  current_position[1][0] = 63; 
+  current_position[1][1] = 63; 
+  current_position[2][0] = 64; 
+  current_position[2][1] = 63; 
+  current_position[3][0] = 63; 
+  current_position[3][1] = 62; 
   pinMode(KEY_LEFT, INPUT);
   pinMode(KEY_RIGHT, INPUT);
    
   button.init();
-  lcd.begin();
-  lcd.print("hello world");    
+  oled.gotoXY(2,2);
+  oled.print("hello"); 
   Serial.begin(9600);
   Serial.println("Hello World");
-  lcd.begin();
-  led.init();
-   for(int i = 0; i < 2 ;i++){
-     led.setLed(current_position[i][1], current_position[i][0], true);
+  oled.renderAll();
+   for(int i = 0; i < 3 ;i++){
+     oled.setPixel(current_position[i][1], current_position[i][0], true);
   }
-  attachInterrupt(digitalPinToInterrupt(KEY_LEFT), moveShipLeft, CHANGE);  
-  attachInterrupt(digitalPinToInterrupt(KEY_RIGHT), moveShipRight, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(KEY_LEFT), moveShipLeft, FALLING);  
+  attachInterrupt(digitalPinToInterrupt(KEY_RIGHT), moveShipRight, FALLING);
   start_time_LEFT = millis();
   start_time_RIGHT = millis();
+   delay(1000);
 }
 
 void loop() {
-  
-  
-    delay(50);
-  if(leftButtonState){
-    led.clearDisplay();
-     if(current_position[0][0] > 0 && current_position[1][0] < 7){
-  current_position[0][0] -= 1;
-  current_position[1][0] -= 1;
-     }
-    Serial.println("GO LEFT");
-  }
-    if(rightButtonState){
-    led.clearDisplay();
-     if(current_position[0][0] > 0 && current_position[1][0] < 7){
-  current_position[0][0] += 1;
-  current_position[1][0] += 1;
-     }
-    Serial.println("GO RIGHT");
-  }
 
-   for(int i = 0; i < 2 ;i++){
-     led.setLed(current_position[i][1], current_position[i][0], true);
+
+
+   for(int i = 0; i < 3 ;i++){
+     oled.setPixel(current_position[i][1], current_position[i][0], true);
+         if(button.buttonPressed(15)){
+    shot();
+
   }
-  
+        oled.renderAll();
+ }
+  //oled.setPixel(current_position[3][1], current_position[3][0], true);
+      oled.renderAll();
+ delay(100);
+
+ oled.clear(false);
+
 }
 
 
 void moveShipLeft(){
-      if(millis() - start_time_LEFT > 150){
-        leftButtonState = true;
-        start_time_LEFT = millis();
-      } else {
-        leftButtonState = false;     
-      }
+  int difference = millis()-last_change_time;
+       if(current_position[1][0] > 1 && (((difference)>timeout) || last_change_time == 0)){
+        current_position[0][0] -= 1;
+        current_position[1][0] -= 1;
+        last_change_time = millis();
+     }
 }
 void moveShipRight(){
-      if(millis() - start_time_RIGHT > 150){
-        rightButtonState = true;
-        start_time_RIGHT = millis();
-      } else {
-        rightButtonState = false;   
-      }
+  int difference = millis()-last_change_time;
+     if(current_position[0][0] < 6 && (((difference)>timeout) || last_change_time == 0)){
+      current_position[0][0] += 1;
+      current_position[1][0] += 1;
+      last_change_time = millis();
+     }
+}
+
+void shot() {
+  int shotPos = current_position[1][0];
+  for(int i = 6; i >= 0 ; i--){
+    oled.setPixel(i, shotPos, true);
+    delay(35);
+    oled.setPixel(i, shotPos, false);
+    oled.renderAll();
+  }
+  
 }
 
 void remapToDisplay(int angIn_X, int angIn_Y, int barrier_x, int barrier_y){
