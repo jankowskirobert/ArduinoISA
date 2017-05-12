@@ -1,28 +1,94 @@
 #include <ISADefinitions.h>
 #include <ISALedControl.h>
 #include <ISALiquidCrystal.h>
+#include <ISAButtons.h>
 
 ISALiquidCrystal lcd;
 ISALedControl led;
+ISAButtons button;
 int joy1_x = 0;
 int joy1_y = 0;
-int pixel[][2]  = {{0,0},{0,0},{0,0},{0,0}};
+int pixel[][2]  = {{0,0},{0,0}};
+volatile int** current_position;
+bool leftButtonState = false;
+bool rightButtonState = false;
+unsigned long start_time_LEFT;
+unsigned long start_time_RIGHT;
 void setup() {
   for (int i = 0 ; i < 7; i++){
     pinMode(LEDS[i], OUTPUT);
   }
-  
+  current_position = new volatile int*[2];
+  for(int i = 0; i < 2; ++i)
+    current_position[i] = new volatile int[0];
+    
+  current_position[0][0] = 3; 
+  current_position[0][1] = 7; 
+  current_position[1][0] = 4; 
+  current_position[1][1] = 7; 
+
+  pinMode(KEY_LEFT, INPUT);
+  pinMode(KEY_RIGHT, INPUT);
+   
+  button.init();
+  lcd.begin();
+  lcd.print("hello world");    
   Serial.begin(9600);
+  Serial.println("Hello World");
   lcd.begin();
   led.init();
+   for(int i = 0; i < 2 ;i++){
+     led.setLed(current_position[i][1], current_position[i][0], true);
+  }
+  attachInterrupt(digitalPinToInterrupt(KEY_LEFT), moveShipLeft, CHANGE);  
+  attachInterrupt(digitalPinToInterrupt(KEY_RIGHT), moveShipRight, CHANGE);
+  start_time_LEFT = millis();
+  start_time_RIGHT = millis();
 }
 
 void loop() {
-  joy1_x = analogRead(JOY1X);
-  joy1_y = analogRead(JOY1Y);
-  delay(50);
-  barrier(3,3);
-  remapToDisplay(joy1_x, joy1_y,3,3);
+  
+  
+    delay(50);
+  if(leftButtonState){
+    led.clearDisplay();
+     if(current_position[0][0] > 0 && current_position[1][0] < 7){
+  current_position[0][0] -= 1;
+  current_position[1][0] -= 1;
+     }
+    Serial.println("GO LEFT");
+  }
+    if(rightButtonState){
+    led.clearDisplay();
+     if(current_position[0][0] > 0 && current_position[1][0] < 7){
+  current_position[0][0] += 1;
+  current_position[1][0] += 1;
+     }
+    Serial.println("GO RIGHT");
+  }
+
+   for(int i = 0; i < 2 ;i++){
+     led.setLed(current_position[i][1], current_position[i][0], true);
+  }
+  
+}
+
+
+void moveShipLeft(){
+      if(millis() - start_time_LEFT > 150){
+        leftButtonState = true;
+        start_time_LEFT = millis();
+      } else {
+        leftButtonState = false;     
+      }
+}
+void moveShipRight(){
+      if(millis() - start_time_RIGHT > 150){
+        rightButtonState = true;
+        start_time_RIGHT = millis();
+      } else {
+        rightButtonState = false;   
+      }
 }
 
 void remapToDisplay(int angIn_X, int angIn_Y, int barrier_x, int barrier_y){
@@ -69,13 +135,14 @@ void pixelUpdate(int pixel[][2], int x, int y) {
     pixel[1][0] = x ;
     pixel[1][1] = y-1 ;
     
-    pixel[2][0] = x-1; 
-    pixel[2][1] = y ;
-
-    pixel[3][0] = x ;
-    pixel[3][1] = y; 
+//    pixel[2][0] = x-1; 
+//    pixel[2][1] = y ;
+//
+//    pixel[3][0] = x ;
+//    pixel[3][1] = y; 
   for(int i = 0; i < 4 ;i++){
      led.setLed(pixel[i][1], pixel[i][0], true);
     }
 }
+
 
