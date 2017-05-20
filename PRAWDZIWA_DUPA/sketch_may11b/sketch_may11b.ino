@@ -3,6 +3,7 @@
 #include <ISALiquidCrystal.h>
 #include <ISAButtons.h>
 #include <ISAOLED.h>
+#include <DueTimer.h>
 
 ISAOLED oled;
 ISALiquidCrystal lcd;
@@ -19,10 +20,12 @@ unsigned long start_time_LEFT;
 unsigned long start_time_RIGHT;
 volatile long long timeout = 200; // 3 seconds
 volatile long long last_change_time = 0;
-
+bool shotEnable = false;
 volatile int enemies[][2] = {{0,0},{0,0}};
 
 void setup() {
+  Timer4.attachInterrupt(shotPosition);
+  Timer4.start(50000);
   oled.begin();
   for (int i = 0 ; i < 7; i++){
     pinMode(LEDS[i], OUTPUT);
@@ -75,7 +78,6 @@ void setup() {
 void loop() {
 
 
-
    for(int i = 0; i < 7 ;i++){
      oled.setPixel(current_position[i][0], current_position[i][1], true);
 
@@ -85,8 +87,13 @@ void loop() {
   if(button.buttonPressed(15)){
     shot();
   }
-      
- delay(100);
+
+if(shotEnable){
+    oled.setPixel(currentShotPosition[0], currentShotPosition[1], true);
+        oled.renderAll();
+           oled.setPixel(currentShotPosition[0], currentShotPosition[1]-1, false);
+           oled.renderAll();
+}
 
  oled.clear(false);
 
@@ -116,16 +123,19 @@ void moveShipRight(){
 void shot() {
   int shotPos = current_position[3][0];
   currentShotPosition[0] = current_position[3][0];
-  currentShotPosition[0] = 63;
-  for(int i = 63; i >= 0 ; i--){
-    oled.setPixel(shotPos, i, true);
-        oled.renderAll();
-    delay(15);
-    oled.setPixel(shotPos, i, false);
-        oled.renderAll();
-
-  }
+  currentShotPosition[1] = 63;
+  shotEnable = true;
   
+  
+}
+
+void shotPosition(){
+  if(shotEnable) {
+      (*(currentShotPosition+1))--;
+      if((*(currentShotPosition+1)) == 0){
+        shotEnable = false;
+      }
+  }
 }
 
 void enemyStrategy() {
