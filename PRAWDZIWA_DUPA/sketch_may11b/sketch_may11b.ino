@@ -103,9 +103,9 @@ enemyStrategy();
 }
 void initializeEnemies() {
   enemies = new volatile int**[MAX_ENEMY_ROW];
-  for(int x = 0; x < 2; ++x) {
+  for(int x = 0; x < MAX_ENEMY_ROW; ++x) {
       enemies[x] = new volatile int*[MAX_ENEMY];
-      for(int y = 0; y < 8; ++y) {
+      for(int y = 0; y < MAX_ENEMY; ++y) {
           enemies[x][y] = new volatile int[3];
           for(int z = 0; z < 2; ++z) { // initialize the values to whatever you want the default to be
               enemies[x][y][z] = 0;
