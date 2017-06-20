@@ -134,9 +134,11 @@ renderPlayerShip();
     for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
   for(int i = 0 ; i < MAX_ENEMY; i++){
   if(enemies[j][i][2]){
-    oled.writeRect(enemies[j][i][0], enemies[j][i][1], 8,8,true);
+    renderEnemyShip(enemies[j][i][0],enemies[j][i][1],true);
+//    oled.writeRect(enemies[j][i][0], enemies[j][i][1], 8, 8, true);
   }else{
-    oled.writeRect(enemies[j][i][0], enemies[j][i][1], 8,8,false);
+    renderEnemyShip(enemies[j][i][0],enemies[j][i][1],false);
+//    oled.writeRect(enemies[j][i][0], enemies[j][i][1], 8, 8, false);
 
   }
   
@@ -282,8 +284,10 @@ void enemyPosition() {
         enemies[j][i][0] = enemies[j][i][0] - MAX_ENEMY_MOVE; 
       if(enemies[j][i][1] < 62)
         enemies[j][i][1]++;
-      else
+      else {
         endGame = true;
+        break;
+      }
     }
   }
 }
@@ -306,5 +310,79 @@ void enemyStrategy() {
       enemies[j][i][2] = true;
     }
   }
+}
+
+void renderEnemyShip(int x, int y,bool flag){
+ // oled.setPixel(x, y, flag);
+  oled.setPixel(x+1, y, flag);
+ // oled.setPixel(x+2, y, true);
+//  oled.setPixel(x+3, y, true);
+//  oled.setPixel(x+4, y, true);
+//  oled.setPixel(x+5, y, true);
+  oled.setPixel(x+6, y, flag);
+//  oled.setPixel(x+7, y, true);
+  
+//  oled.setPixel(x, y+1, true);
+//  oled.setPixel(x+1, y+1, true);
+  oled.setPixel(x+2, y+1, flag);
+//  oled.setPixel(x+3, y+1, true);
+//  oled.setPixel(x+4, y+1, true);
+  oled.setPixel(x+5, y+1, flag);
+//  oled.setPixel(x+6, y+1, true);
+//  oled.setPixel(x+7, y+1, true);
+  
+//  oled.setPixel(x, y+2, true);
+  oled.setPixel(x+1, y+2, flag);
+  oled.setPixel(x+2, y+2, flag);
+  oled.setPixel(x+3, y+2, flag);
+  oled.setPixel(x+4, y+2, flag);
+  oled.setPixel(x+5, y+2, flag);
+  oled.setPixel(x+6, y+2, flag);
+//  oled.setPixel(x+7, y+2, true);
+
+  oled.setPixel(x, y+3, flag);
+  oled.setPixel(x+1, y+3, flag);
+//  oled.setPixel(x+2, y+3, true);
+  oled.setPixel(x+3, y+3, flag);
+  oled.setPixel(x+4, y+3, flag);
+//  oled.setPixel(x+5, y+3, true);
+  oled.setPixel(x+6, y+3, flag);
+  oled.setPixel(x+7, y+3, flag);
+
+  oled.setPixel(x, y+4, flag);
+  oled.setPixel(x+1, y+4, flag);
+//  oled.setPixel(x+2, y+4, true);
+  oled.setPixel(x+3, y+4, flag);
+  oled.setPixel(x+4, y+4, flag);
+//  oled.setPixel(x+5, y+4, true);
+  oled.setPixel(x+6, y+4, flag);
+  oled.setPixel(x+7, y+4, flag);
+
+    oled.setPixel(x, y+5, flag);
+  oled.setPixel(x+1, y+5, flag);
+  oled.setPixel(x+2, y+5, flag);
+  oled.setPixel(x+3, y+5, flag);
+  oled.setPixel(x+4, y+5, flag);
+  oled.setPixel(x+5, y+5, flag);
+  oled.setPixel(x+6, y+5, flag);
+  oled.setPixel(x+7, y+5, flag);
+
+//    oled.setPixel(x, y+6, true);
+  oled.setPixel(x+1, y+6, flag);
+  oled.setPixel(x+2, y+6, flag);
+  oled.setPixel(x+3, y+6, flag);
+  oled.setPixel(x+4, y+6, flag);
+  oled.setPixel(x+5, y+6, flag);
+  oled.setPixel(x+6, y+6, flag);
+//  oled.setPixel(x+7, y+6, true);
+
+//    oled.setPixel(x, y+7, true);
+//  oled.setPixel(x+1, y+7, true);
+  oled.setPixel(x+2, y+7, flag);
+//  oled.setPixel(x+3, y+7, true);
+//  oled.setPixel(x+4, y+7, true);
+  oled.setPixel(x+5, y+7, flag);
+//  oled.setPixel(x+6, y+7, true);
+//  oled.setPixel(x+7, y+7, true);
 }
 
