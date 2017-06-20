@@ -279,12 +279,13 @@ void enemyPosition() {
   for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
     for(int i = 0 ; i < MAX_ENEMY; i++){
       if(enemyMoveFlag)
-        enemies[j][i][0] = enemies[j][i][0] + MAX_ENEMY_MOVE;
+        enemies[j][i][0] = enemies[j][i][0] + MAX_ENEMY_MOVE;//(MAX_ENEMY_MOVE>0) ? MAX_ENEMY_MOVE : 0;
       else
-        enemies[j][i][0] = enemies[j][i][0] - MAX_ENEMY_MOVE; 
-      if(enemies[j][i][1] < 62)
-        enemies[j][i][1]++;
-      else {
+        enemies[j][i][0] = enemies[j][i][0] - MAX_ENEMY_MOVE;//(MAX_ENEMY_MOVE>0) ? MAX_ENEMY_MOVE : 0; 
+      if(enemies[j][i][1] < 62){
+        (MAX_ENEMY_MOVE>0) ? (enemies[j][i][1]++) : 0;
+//        enemies[j][i][1]++;
+      }else {
         endGame = true;
         break;
       }
@@ -296,9 +297,13 @@ void updateLvl() {
   enemyShotEnable = false;
   shotEnable = false;
   hitted = 0;
-  MAX_ENEMY_ROW++;
-  enemyStrategy();
   gameLevel++;
+  if(gameLevel < 4){
+    MAX_ENEMY_ROW++;
+    MAX_ENEMY_MOVE--;
+  }
+  enemyStrategy();
+  
 }
 
 void enemyStrategy() {
