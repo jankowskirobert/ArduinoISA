@@ -23,27 +23,33 @@ volatile long long last_change_time = 0;
 bool shotEnable = false;
 bool enemyShotEnable = false;
 bool enemyMoveFlag = false;
-volatile int** enemies;
+volatile int*** enemies;
 volatile int MAX_ENEMY_MOVE = 4;
 volatile int MAX_ENEMY = 8;
 volatile bool endGame = false;
+volatile int enemyShotSpeed = 1;
+volatile int globalScore = 0;
+volatile int gameLevel = 0;
 int hitted = 0;
 volatile long randNumber;
-
+volatile int MAX_ENEMY_ROW = 1;
 void setup() {
+  lcd.begin();
   long seed = 0;
  for (int i = 0; i < 12; i++)
  seed += analogRead(i);
  randomSeed(seed);
  
   Timer4.attachInterrupt(shotPosition);
-  Timer4.start(25000);
+  Timer4.start(21000);
   Timer5.attachInterrupt(enemyPosition);
   Timer5.start(1250000);
   Timer6.attachInterrupt(enemyShotEnabler);
   Timer6.start(1200000);
   Timer7.attachInterrupt(enemyShot);
   Timer7.start(22500);
+  Timer3.attachInterrupt(printScore);
+  Timer3.start(125000);
   oled.begin();
   for (int i = 0 ; i < 7; i++){
     pinMode(LEDS[i], OUTPUT);
@@ -52,10 +58,8 @@ void setup() {
   for(int i = 0; i < 7; ++i)
     current_position[i] = new volatile int[0];
 
-  enemies = new volatile int*[8];
-  for(int i = 0; i < MAX_ENEMY; ++i)
-    enemies[i] = new volatile int[0];
-    
+
+enemyStrategy();
   current_position[0][0] = 60; 
   current_position[0][1] = 63;
    
@@ -94,8 +98,20 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(KEY_RIGHT), moveShipRight, FALLING);
   start_time_LEFT = millis();
   start_time_RIGHT = millis();
-   delay(1000);
-  enemyStrategy();
+  delay(1000);
+  
+}
+void initializeEnemies() {
+  enemies = new volatile int**[MAX_ENEMY_ROW];
+  for(int x = 0; x < 2; ++x) {
+      enemies[x] = new volatile int*[MAX_ENEMY];
+      for(int y = 0; y < 8; ++y) {
+          enemies[x][y] = new volatile int[3];
+          for(int z = 0; z < 2; ++z) { // initialize the values to whatever you want the default to be
+              enemies[x][y][z] = 0;
+          }
+      }
+  }
 }
 volatile int player_x = 63;
 int joyX = 0;
@@ -113,17 +129,19 @@ void loop() {
       }
   
 renderPlayerShip();
-      
     
   if(!endGame){
+    for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
   for(int i = 0 ; i < MAX_ENEMY; i++){
-  if(enemies[i][2]){
-    oled.writeRect(enemies[i][0], enemies[i][1], 8,8,true);
+  if(enemies[j][i][2]){
+    oled.writeRect(enemies[j][i][0], enemies[j][i][1], 8,8,true);
   }else{
-    oled.writeRect(enemies[i][0], enemies[i][1], 8,8,false);
+    oled.writeRect(enemies[j][i][0], enemies[j][i][1], 8,8,false);
 
   }
+  
 }
+    }
    for(int i = 0; i < 7 ;i++){
      oled.setPixel(current_position[i][0], current_position[i][1], true);
 
@@ -153,7 +171,21 @@ if(enemyShotEnable){
 }
 
 
-
+void printScore() {
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Score:");
+  lcd.setCursor(7,0);
+  lcd.print(globalScore);
+  lcd.setCursor(11,0);
+  lcd.print("lvl:");
+  lcd.setCursor(15,0);
+  lcd.print(gameLevel);
+  if(endGame) {
+    lcd.setCursor(0,1);
+    lcd.print("LOOSER");
+  }
+}
 
 void renderPlayerShip() {
   for(int i = -2; i < 5; ++i){
@@ -163,28 +195,28 @@ void renderPlayerShip() {
 
 void moveShipLeft(){
   int difference = millis()-last_change_time;
-       if(player_x > 3 && (((difference)>timeout) || last_change_time == 0)){  
-          player_x -= 3;
+       if(player_x > 6 && (((difference)>timeout) || last_change_time == 0)){  
+          player_x -= 6;
         last_change_time = millis();
      }
      renderPlayerShip();
 }
 void moveShipRight(){
   int difference = millis()-last_change_time;
-     if(player_x < 122 && (((difference)>timeout) || last_change_time == 0)){
-      player_x += 3;
+     if(player_x < 119 && (((difference)>timeout) || last_change_time == 0)){
+      player_x += 6;
       last_change_time = millis();
      }
      renderPlayerShip();
 }
 
 void shot() {
-  int shotPos = current_position[3][0];
-  currentShotPosition[0] = current_position[3][0];
-  currentShotPosition[1] = 63;
-  shotEnable = true;
-  
-  
+  if(!shotEnable){
+    int shotPos = current_position[3][0];
+    currentShotPosition[0] = current_position[3][0];
+    currentShotPosition[1] = 63;
+    shotEnable = true;
+  }
 }
 
 void shotPosition(){
@@ -198,59 +230,81 @@ void shotPosition(){
 }
 
 void checkShot(int posx, int posy){
- 
+ for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
   for(int i = 0 ; i < MAX_ENEMY; i++){
-    if(posx >= enemies[i][0] && posx <= enemies[i][0]+8 && posy <= enemies[i][1] && posy <= enemies[i][1]+8 && enemies[i][2]){
-      enemies[i][2] = false;
+    if(posx >= enemies[j][i][0] && posx <= enemies[j][i][0]+8 && posy >= enemies[j][i][1] && posy <= enemies[j][i][1]+8 && enemies[j][i][2]){
+      enemies[j][i][2] = false;
       hitted++;
+      globalScore++;
+      shotEnable = false;
       Serial.println(hitted);
-      if(hitted == MAX_ENEMY){
-        endGame = true;
-         int hitted = 0;
+      if(hitted == MAX_ENEMY*MAX_ENEMY_ROW){
+        updateLvl();
+        int hitted = 0;
       }
     }
   }
+ }
   
 }
 void enemyShot() {
   if(enemyShotEnable) {
-      (*(currentEnemyShotPosition+1))++;
+      (*(currentEnemyShotPosition+1))+=enemyShotSpeed;
       if((*(currentEnemyShotPosition+1)) > 64){
         enemyShotEnable = false;
       }
-      if((*(currentEnemyShotPosition+1)) >= 64 && ((*(currentEnemyShotPosition)) <= player_x+4 && (*(currentEnemyShotPosition)) >= player_x-3)
-      ){
+      if((*(currentEnemyShotPosition+1)) >= 63 && ((*(currentEnemyShotPosition)) <= player_x+4 && (*(currentEnemyShotPosition)) >= player_x-3)){
         endGame = true;
       }
   }
 }
 void enemyShotEnabler() {
-  randNumber = random(MAX_ENEMY-1);
-  if(enemies[randNumber][2] == true){
-    enemyShotEnable = true;
-    (*(currentEnemyShotPosition+1)) = enemies[randNumber][1]+8;
-    (*(currentEnemyShotPosition)) = enemies[randNumber][0]+4;
+  for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
+  for(int i = 0 ; i < MAX_ENEMY; i++){
+    randNumber = random(10);
+    if(randNumber>5 && !enemyShotEnable){
+      if(enemies[j][i][2] == true){
+        enemyShotEnable = true;
+        (*(currentEnemyShotPosition+1)) = enemies[j][i][1]+8;
+        (*(currentEnemyShotPosition)) = enemies[j][i][0]+4;
+      }
+    }
+  }
   }
 }
-void enemyPosition() {
-  
-  
+void enemyPosition() { 
   enemyMoveFlag = !enemyMoveFlag;
-  for(int i = 0 ; i < MAX_ENEMY; i++){
-    if(enemyMoveFlag)
-      enemies[i][0] = enemies[i][0] + MAX_ENEMY_MOVE;
-    else
-      enemies[i][0] = enemies[i][0] - MAX_ENEMY_MOVE; 
-    enemies[i][1]++;
+  for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
+    for(int i = 0 ; i < MAX_ENEMY; i++){
+      if(enemyMoveFlag)
+        enemies[j][i][0] = enemies[j][i][0] + MAX_ENEMY_MOVE;
+      else
+        enemies[j][i][0] = enemies[j][i][0] - MAX_ENEMY_MOVE; 
+      if(enemies[j][i][1] < 62)
+        enemies[j][i][1]++;
+      else
+        endGame = true;
+    }
   }
+}
+
+void updateLvl() {
+  enemyShotEnable = false;
+  shotEnable = false;
+  hitted = 0;
+  MAX_ENEMY_ROW++;
+  enemyStrategy();
+  gameLevel++;
 }
 
 void enemyStrategy() {
-  for(int i = 0 ; i < MAX_ENEMY; i++){
-    enemies[i][0] = 7+i*15;
-    enemies[i][1] = 2;
-    enemies[i][2] = true;
+  initializeEnemies();
+  for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
+    for(int i = 0 ; i < MAX_ENEMY; i++){
+      enemies[j][i][0] = 7+i*15;
+      enemies[j][i][1] = 2 + j*12 ;
+      enemies[j][i][2] = true;
+    }
   }
-
 }
 
