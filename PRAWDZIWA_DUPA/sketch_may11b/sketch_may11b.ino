@@ -185,7 +185,7 @@ void printScore() {
   lcd.print(gameLevel);
   if(endGame) {
     lcd.setCursor(0,1);
-    lcd.print("LOOSER");
+    lcd.print("LOSER");
   }
 }
 
@@ -234,7 +234,7 @@ void shotPosition(){
 void checkShot(int posx, int posy){
  for(int j = 0 ; j < MAX_ENEMY_ROW; j++){
   for(int i = 0 ; i < MAX_ENEMY; i++){
-    if(posx >= enemies[j][i][0] && posx <= enemies[j][i][0]+8 && posy >= enemies[j][i][1] && posy <= enemies[j][i][1]+8 && enemies[j][i][2]){
+    if(posx >= enemies[j][i][0] && posx <= enemies[j][i][0]+8 && posy >= enemies[j][i][1] && posy <= enemies[j][i][1]+8 && enemies[j][i][2] && shotEnable){
       enemies[j][i][2] = false;
       hitted++;
       globalScore++;
@@ -282,7 +282,7 @@ void enemyPosition() {
         enemies[j][i][0] = enemies[j][i][0] + MAX_ENEMY_MOVE;//(MAX_ENEMY_MOVE>0) ? MAX_ENEMY_MOVE : 0;
       else
         enemies[j][i][0] = enemies[j][i][0] - MAX_ENEMY_MOVE;//(MAX_ENEMY_MOVE>0) ? MAX_ENEMY_MOVE : 0; 
-      if(enemies[j][i][1] < 62){
+      if(enemies[j][i][1] < 56){
         (MAX_ENEMY_MOVE>0) ? (enemies[j][i][1]++) : 0;
 //        enemies[j][i][1]++;
       }else {

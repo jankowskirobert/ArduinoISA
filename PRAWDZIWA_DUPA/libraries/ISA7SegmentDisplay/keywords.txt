@@ -1,0 +1,4 @@
+ISA7SegmentDisplay	KEYWORD1
+init	KEYWORD2
+displayDigit	KEYWORD2
+setLed	KEYWORD2

@@ -1,0 +1,6 @@
+ISALedControl	KEYWORD1
+init	KEYWORD2
+clearDisplay	KEYWORD2
+setRow	KEYWORD2
+setColumn	KEYWORD2
+setLed	KEYWORD2

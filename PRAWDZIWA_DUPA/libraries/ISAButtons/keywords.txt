@@ -1,0 +1,5 @@
+ISAButtons	KEYWORD1
+init	KEYWORD2
+buttonPressed	KEYWORD2
+buttonReleased	KEYWORD2
+buttonState KEYWORD2
