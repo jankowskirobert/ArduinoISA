@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
 #include "ArduinoSerialCommunicator.hpp"
-#include "OpenCV_test1.h"
+
 #define TARGET_FPS 30
-#define ARDUINO_COMMUNICATION 0
+#define ARDUINO_COMMUNICATION 1
 
 
 void DilateErode(cv::Mat thresholdedImage)
@@ -113,15 +113,10 @@ std::pair <std::vector<std::vector<cv::Point>>, std::vector<cv::Vec3i>> getConto
 std::vector<cv::Vec3i> findCirclesUsingHoughes(cv::Mat imageToSearchCirclesIn)
 {
 	std::vector<cv::Vec3i> circlesFoundUsingHoughes;
-
-	//Hough Transform - detecting circles
-	//Blur the image before - improves detection
+    std::vector<cv::Vec3i> lineFoundUsingHoughes;
 	cv::GaussianBlur(imageToSearchCirclesIn, imageToSearchCirclesIn, cv::Size(9, 9), 2, 2);
 	cv::HoughCircles(imageToSearchCirclesIn, circlesFoundUsingHoughes, cv::HOUGH_GRADIENT, 2, imageToSearchCirclesIn.rows / 4, 200, 50);
-
-	
 	return circlesFoundUsingHoughes;
-
 }
 
 
@@ -154,7 +149,67 @@ cv::Point findCenterOfBlobUsingMoments(cv::Mat imageToSearchBlobIn)
 
 	return blobCenter;
 }
+struct myclass {
+    bool operator() (cv::Point pt1, cv::Point pt2) { return (pt1.y < pt2.y);}
+} myobject;
 
+
+std::pair <std::vector<std::vector<cv::Point>>, std::vector<cv::Vec2i>> getContoursAndLines(cv::Mat imageToSearchContoursIn)
+{
+
+
+    std::vector<std::vector<cv::Point>> contouredElementsOnScreen;
+    std::vector<cv::Vec2i> linesFoundUsingContours;
+
+
+
+    cv::findContours(imageToSearchContoursIn, contouredElementsOnScreen, cv::RetrievalModes::RETR_EXTERNAL, cv::ContourApproximationModes::CHAIN_APPROX_NONE);
+    unsigned int minPointsInContour = 50;
+
+    contouredElementsOnScreen.erase(std::remove_if(contouredElementsOnScreen.begin(),
+        contouredElementsOnScreen.end(),
+        [=](const std::vector<cv::Point>& contour)
+    {
+        if (contour.size() < minPointsInContour) return true;
+        else { return false; }
+    }),
+        contouredElementsOnScreen.end());
+    int max = 0;
+    std::vector<cv::Point> contoureMax = contouredElementsOnScreen[0];
+    if(contouredElementsOnScreen.size() == 0)
+        return {contouredElementsOnScreen, linesFoundUsingContours};
+    for (auto contour : contouredElementsOnScreen)
+    {
+        if(max < contour.size()){
+            contoureMax = contour;
+            max = contour.size();
+        }
+    }
+     std::sort (contoureMax.begin(), contoureMax.end(), myobject);
+     int countSameY = 1;
+     int avgX  = contoureMax[0].x;
+     for( int i = 0; i < contoureMax.size()-1; i++ ) {
+        cv::Point avg1 = contoureMax[i];
+        cv::Point avg2 = contoureMax[i+1];
+        if(avg1.y == avg2.y) {
+            countSameY++;
+            avgX+=avg2.x;
+        } else {
+            if(countSameY%2 == 0){
+                double posX = avgX/countSameY;
+                linesFoundUsingContours.push_back(cv::Vec2d(posX, avg1.y));
+            } else {
+                avgX  = avg2.x;
+                countSameY = 1;
+                continue;
+            }
+            avgX  = avg2.x;
+            countSameY = 1;
+        }
+     }
+    return {contouredElementsOnScreen, linesFoundUsingContours};
+
+}
 
 cv::Vec2i calculateCameraMovement(cv::Point	screenCenter, cv::Point blobCenter, int originalImageColumns, int originalImageRows, int minRange = -20, int maxRange = -20)
 {
@@ -173,10 +228,15 @@ cv::Vec2i calculateCameraMovement(cv::Point	screenCenter, cv::Point blobCenter, 
 	movementVectorScaled[1] = (((movementVectorOnScreen[1] - (-originalImageRows / 2)) * (maxRange - (minRange))) / ((originalImageRows / 2) - (-originalImageRows / 2))) + (minRange);
 
 
-	return movementVectorScaled;
+    return movementVectorOnScreen;
 
 }
-
+cv::Point findNearestPoint(std::vector<cv::Vec2i> lines) {
+    cv::Vec2i v = lines.back();
+    lines.pop_back();
+    cv::Point tmp = cv::Point(v[0], v[1]) ;
+return tmp;
+}
 
 int main()
 {
@@ -204,16 +264,33 @@ int main()
 	//int iHighV = 255;
 
 	//BLUE
-	int iLowH = 93;
-	int iHighH = 120;
+//	int iLowH = 93;
+//	int iHighH = 120;
 
-	int iLowS = 196;
-	int iHighS = 255;
+//	int iLowS = 196;
+//	int iHighS = 255;
 
-	int iLowV = 121;
-	int iHighV = 255;
+//	int iLowV = 121;
+//	int iHighV = 255;
 
+    ////GREEN
+//    int iLowH = 52;
+//    int iHighH = 76;
 
+//    int iLowS = 194;
+//    int iHighS = 255;
+
+//    int iLowV = 121;
+//    int iHighV = 255;
+//LIGHTBLUE
+    int iLowH = 0;
+    int iHighH = 83;
+
+    int iLowS = 0;
+    int iHighS = 255;
+
+    int iLowV = 0;
+    int iHighV = 255;
 	//Create trackbars in "Control" window
 	cv::createTrackbar("LowH", "Control Sliders", &iLowH, 179); //Hue (0 - 179)
 	cv::createTrackbar("HighH", "Control Sliders", &iHighH, 179);
@@ -266,7 +343,7 @@ int main()
 
 		// read a new frame from video
 		bool bSuccess = cap.read(imgOriginal);
-
+        cv::flip(imgOriginal,imgOriginal, -1);
 		if (!bSuccess) //if not success, break loop
 		{
 			std::cout << "Could not read frame from the video stream" << std::endl;
@@ -307,33 +384,47 @@ int main()
 		//Find the contours of the image
 		std::vector<std::vector<cv::Point>> contouredElementsOnScreen;
 		std::vector<cv::Vec3i> circlesFoundUsingContours;
+        std::vector<std::vector<cv::Point>> contouredElementsOnScreen2;
+        std::vector<cv::Vec2i> linesFoundUsingContours;
 
 		if (canny)
 		{
-			std::tie(contouredElementsOnScreen, circlesFoundUsingContours) = getContoursAndCircles(canny_out);
+            std::tie(contouredElementsOnScreen, circlesFoundUsingContours) = getContoursAndCircles(canny_out);
+            std::tie(contouredElementsOnScreen2, linesFoundUsingContours) = getContoursAndLines(canny_out);
+
 		}
 		else
 		{
-			std::tie(contouredElementsOnScreen, circlesFoundUsingContours) = getContoursAndCircles(imgThresholded);
+            std::tie(contouredElementsOnScreen, circlesFoundUsingContours) = getContoursAndCircles(imgThresholded);
+            std::tie(contouredElementsOnScreen2, linesFoundUsingContours) = getContoursAndLines(imgThresholded);
 		}
 
 		//Draw the results on screen:
+
 		//contours
-		cv::drawContours(imgGray, contouredElementsOnScreen, -1, cv::Scalar{ 255,0,0 }, 2);
+        cv::drawContours(imgGray, contouredElementsOnScreen2, -1, cv::Scalar{ 255,0,0 }, 2);
 		//circles
-		for (auto circle : circlesFoundUsingContours)
+        for (auto circle : circlesFoundUsingContours)
 		{
 			cv::circle(imgGray, cv::Point{ (int)circle[0], (int)circle[1] }, (int)circle[2], cv::Scalar{ 255,0,0 }, 5);
 		}
 
+        //linesFoundUsingContours
+
+        for (auto circle : linesFoundUsingContours)
+        {
+            cv::circle(imgGray, cv::Point{ (int)circle[0], (int)circle[1] },2 , cv::Scalar{ 255,0,0 }, 5);
+        }
 
 
 
 		//******************************************************************************************************************************************************
 		//FINDING Objects of interest - another way, using blobs of single color and (optionally) Hough circles algorithm
 		
-		cv::Point blobCenter = findCenterOfBlobUsingMoments(imgThresholded);
+        cv::Point blobCenter = findNearestPoint(linesFoundUsingContours);
 
+        //
+//        cv::Point lineCenter = findCenterOfLineUsingCustomMethod(imgThresholded);
 
 		if (blobCenter.x > 0 && blobCenter.y > 0)
 		{
@@ -347,7 +438,7 @@ int main()
 
 #if ARDUINO_COMMUNICATION
 			std::string stringToSend;
-			stringToSend += std::string("V(") + std::to_string(scaledVector[0]) + std::string(",") + std::to_string(scaledVector[1]) + std::string(")");
+            stringToSend += std::string("V(") + std::to_string(scaledVector[0]) + std::string(",") + std::to_string(scaledVector[1]) + std::string(")");
 			std::cout << "Sending scaled vector: " << stringToSend << std::endl;
 
 			//Sending data to arduino and polling for response
@@ -358,24 +449,24 @@ int main()
 
 		}
 				
-		if (hough_circles)
-		{
+//		if (hough_circles)
+//		{
 
-			std::vector<cv::Vec3i> circlesFoundUsingHoughes;
-			circlesFoundUsingHoughes = findCirclesUsingHoughes(imgThresholded);
+//			std::vector<cv::Vec3i> circlesFoundUsingHoughes;
+//			circlesFoundUsingHoughes = findCirclesUsingHoughes(imgThresholded);
 					
 
-			for (auto circle : circlesFoundUsingHoughes)
-			{
-				cv::Point center(cvRound(circle[0]), cvRound(circle[1]));
-				int radius = cvRound(circle[2]);
+//			for (auto circle : circlesFoundUsingHoughes)
+//			{
+//				cv::Point center(cvRound(circle[0]), cvRound(circle[1]));
+//				int radius = cvRound(circle[2]);
 
-				cv::circle(imgOriginal, center, radius, cv::Scalar(255, 0, 0), 4);
+//				cv::circle(imgOriginal, center, radius, cv::Scalar(255, 0, 0), 4);
 
-			}
+//			}
 
 				
-		}
+//		}
 
 
 
