@@ -69,8 +69,8 @@ int main(int argc,char* argv[])
 
 	motorSpeeds[0] = -3.1415f*0.5f;
 	motorSpeeds[1] = -3.1415f*0.25f;
-	simxSetJointTargetVelocity(clientID, leftMotorHandle, motorSpeeds[0], simx_opmode_oneshot);
-	simxSetJointTargetVelocity(clientID, rightMotorHandle, motorSpeeds[1], simx_opmode_oneshot);
+//	simxSetJointTargetVelocity(clientID, leftMotorHandle, motorSpeeds[0], simx_opmode_oneshot);
+//	simxSetJointTargetVelocity(clientID, rightMotorHandle, motorSpeeds[1], simx_opmode_oneshot);
 	extApi_sleepMs(5000);
 
 
@@ -80,13 +80,45 @@ int main(int argc,char* argv[])
 		fflush(stdout);
 		
 		//
-
-        simxUChar *visionTrigger=NULL;
-	simxFloat **auxValues = NULL;
-	simxInt **auxValuesCount = NULL;
+	int defaultAuxPackageSize = 15;
+        simxUChar *visionTrigger=(simxUChar*) calloc(15, sizeof(simxUChar));
+	simxFloat **auxValues = (simxFloat**) calloc(4, sizeof(simxFloat*));
+	for(int i = 0 ; i< 4; i++ ) {
+		auxValues[i] = (simxFloat*) calloc(15, sizeof(simxFloat));
+	}
+	simxInt **auxValuesCount = (simxInt**) calloc(4, sizeof(simxInt*));;
+	for(int i = 0 ; i< 4; i++ ) {
+                auxValues[i] = (simxFloat*) calloc(15, sizeof(simxInt));
+        }
+	simxInt resolution[2];
+	simxUChar** Image = (simxUChar**) calloc(10, sizeof(simxUChar*));
+	for(int i = 0 ; i< 10; i++ ) {
+		Image[i] = (simxUChar*) calloc(10, sizeof(simxUChar));
+	}
+	int retImg = simxGetVisionSensorImage(clientID,visionHandle,resolution,&Image,0,simx_opmode_buffer);
+	if(retImg == simx_return_ok) {
+		printf("TERMINATOR_ROBERT:%d %d \n[ ", resolution[0], resolution[1]);
+		 for(int i = 0 ; i< 10; i++ ) {
+                        for(int j = 0; j < 10 ; j++)
+                                printf(" %c ",Image[i][j]);
+		printf("]\n");
+               }
+		
+	}
 	simxInt operationVisionMode = 0;
-	int result = simxReadVisionSensor(clientID, visionHandle, visionTrigger,auxValues, auxValuesCount, operationVisionMode);
-	if(result >= 1) {
+	int result = simxReadVisionSensor(clientID, visionHandle, visionTrigger, auxValues, auxValuesCount, simx_opmode_streaming); //doklejone
+	if(result == simx_return_ok) {
+		printf("TEST");
+		for(int i = 0 ; i< 4; i++ ) {
+			for(int j = 0; j < 15 ; j++){
+  	        		printf("%f ",auxValues[i][j]);
+			}
+		printf(" [ ");
+			for(int j = 0; j < 15 ; j++){
+                                printf("%c ",visionTrigger[i]);
+                        }
+		printf("]\n");
+	        }
 
 	}	
 
@@ -111,7 +143,19 @@ int main(int argc,char* argv[])
             simxSetJointTargetVelocity(clientID,rightMotorHandle,motorSpeeds[1],simx_opmode_oneshot);           
         }
         extApi_sleepMs(5);
+
+	for(int i = 0 ; i< 4; i++ ) {
+        	free(auxValues[i]);
+        }
+	free(auxValues);
+        for(int i = 0 ; i< 4; i++ ) {
+                free(auxValuesCount[i]);
+        }
+        free(auxValuesCount);
+
     }
     simxFinish(clientID);
+
+
 }
 
