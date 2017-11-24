@@ -32,6 +32,7 @@ int main(int argc,char* argv[])
     int cameraHandle;
     int jhHandle;
     int jvHandle;
+    int g;
 
 	printf("Laczenie z serwerem V-REP Remote Api...\n");
     int clientID=simxStart("127.0.0.1",20000,true,true,2000,5);
@@ -47,6 +48,7 @@ int main(int argc,char* argv[])
     int ret3 = simxGetObjectHandle(clientID, "Vision_sensor", &cameraHandle, simx_opmode_blocking);
     int ret4 = simxGetObjectHandle(clientID, "jh", &jhHandle, simx_opmode_blocking);
     int ret5 = simxGetObjectHandle(clientID, "jv", &jvHandle, simx_opmode_blocking);
+    simxGetObjectHandle(clientID, "Graph", &g, simx_opmode_blocking);
 
     if (ret1 != simx_return_ok || ret2 != simx_return_ok || ret3 != simx_return_ok || ret4 != simx_return_ok || ret5 != simx_return_ok)
     {
@@ -112,8 +114,11 @@ int main(int argc,char* argv[])
             printf("\n");
             float ox=auxValues[0][19];
             float oy=auxValues[0][20];
-            simxSetJointTargetVelocity(clientID,jhHandle,5*(0.5-ox),simx_opmode_blocking);
-            simxSetJointTargetVelocity(clientID,jvHandle,(-1)*(0.5-oy),simx_opmode_blocking);
+            simxSetJointTargetVelocity(clientID,jhHandle,1*(0.5-ox),simx_opmode_blocking);
+            simxSetJointTargetVelocity(clientID,jvHandle,(-0.1)*(0.5-oy),simx_opmode_blocking);
+
+            //simSetGraphUserData(g, "x",ox);
+            //simSetGraphUserData(g, "y",oy);
             /**--simAddStatusbarMessage("Obiekty "..p2[1])
             simAddStatusbarMessage(string.format("ox=%.2f; oy=%.2f",ox,oy))
 
